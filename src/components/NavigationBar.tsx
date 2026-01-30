@@ -39,9 +39,9 @@ export function NavigationBar({
       transition={{ duration: 0.3 }}
       className="sticky top-0 z-50 bg-white border-b border-[#E8E6E0] shadow-sm"
     >
-      <div className="flex items-center justify-between px-3 py-2 max-w-7xl mx-auto">
+      <div className="flex items-center justify-between px-3 py-3 sm:py-2 max-w-7xl mx-auto">
         {/* Primary Navigation */}
-        <div className="flex items-center gap-1 sm:gap-2">
+        <div className="flex items-center gap-2 sm:gap-2.5">
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -49,16 +49,16 @@ export function NavigationBar({
                 key={item.id}
                 onClick={item.onClick}
                 className={`
-                  relative group flex items-center gap-1.5 sm:gap-2 
-                  px-2 sm:px-3 py-2 rounded-xl
+                  relative group flex items-center justify-center gap-2 sm:gap-2.5
+                  px-3 sm:px-4 py-3 sm:py-2.5 rounded-xl
                   bg-gradient-to-br ${item.color}
                   shadow-sm hover:shadow-md
                   transition-all active:scale-95
-                  min-w-[44px] sm:min-w-[48px]
+                  min-w-[56px] sm:min-w-[64px]
                 `}
                 aria-label={item.label}
               >
-                <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white flex-shrink-0" strokeWidth={2.5} />
+                <Icon className="w-10 h-10 sm:w-12 sm:h-12 text-white flex-shrink-0" strokeWidth={2.5} />
                 <span className="hidden md:inline text-white text-sm font-medium">
                   {item.label}
                 </span>
@@ -68,7 +68,7 @@ export function NavigationBar({
         </div>
 
         {/* User Actions */}
-        <div className="flex items-center gap-1 sm:gap-2">
+        <div className="flex items-center gap-2 sm:gap-2.5">
           {userItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -77,16 +77,16 @@ export function NavigationBar({
                 onClick={item.onClick}
                 className={`
                   relative flex items-center justify-center
-                  w-10 h-10 sm:w-11 sm:h-11 rounded-full
+                  w-14 h-14 sm:w-16 sm:h-16 rounded-full
                   bg-gradient-to-br ${item.color}
                   border-2 border-white shadow-md
                   transition-all active:scale-95 hover:shadow-lg
                 `}
                 aria-label={item.label}
               >
-                <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" strokeWidth={2.5} />
+                <Icon className="w-7 h-7 sm:w-8 sm:h-8 text-white" strokeWidth={2.5} />
                 {item.badge && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#d4183d] text-white text-xs rounded-full flex items-center justify-center border-2 border-white shadow-md">
+                  <span className="absolute -top-0.5 -right-0.5 w-6 h-6 bg-[#d4183d] text-white text-xs font-semibold rounded-full flex items-center justify-center border-2 border-white shadow-md">
                     {item.badge}
                   </span>
                 )}
