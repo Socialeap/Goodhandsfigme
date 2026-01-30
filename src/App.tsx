@@ -174,23 +174,41 @@ export default function App() {
 
   const handleNavCalendar = () => {
     const calendarUrl = `${GENIALLY_BASE}?idSlide=f9cd8a38-2b06-4ef7-a774-ed04a4f9042d`;
-    if (currentView !== 'embed' || currentEmbedUrl !== calendarUrl) {
-      navigateToView('embed', calendarUrl);
-    }
+    const baseCalendarUrl = calendarUrl.split('&_t=')[0]; // Remove timestamp if present
+    const currentBaseUrl = currentEmbedUrl.split('&_t=')[0];
+    
+    // Always navigate, add timestamp to force reload if already on same page
+    const urlWithTimestamp = currentView === 'embed' && currentBaseUrl === baseCalendarUrl
+      ? `${calendarUrl}&_t=${Date.now()}`
+      : calendarUrl;
+    
+    navigateToView('embed', urlWithTimestamp);
   };
 
   const handleNavGames = () => {
     const gamesUrl = `${GENIALLY_BASE}?idSlide=c2638c0c-88b2-4441-809f-d2f2fc316a7d`;
-    if (currentView !== 'embed' || currentEmbedUrl !== gamesUrl) {
-      navigateToView('embed', gamesUrl);
-    }
+    const baseGamesUrl = gamesUrl.split('&_t=')[0]; // Remove timestamp if present
+    const currentBaseUrl = currentEmbedUrl.split('&_t=')[0];
+    
+    // Always navigate, add timestamp to force reload if already on same page
+    const urlWithTimestamp = currentView === 'embed' && currentBaseUrl === baseGamesUrl
+      ? `${gamesUrl}&_t=${Date.now()}`
+      : gamesUrl;
+    
+    navigateToView('embed', urlWithTimestamp);
   };
 
   const handleNavLeaderboard = () => {
     const leaderboardUrl = `${GENIALLY_BASE}?idSlide=00ea8673-0fd5-4c37-ae16-c263fdf26021`;
-    if (currentView !== 'embed' || currentEmbedUrl !== leaderboardUrl) {
-      navigateToView('embed', leaderboardUrl);
-    }
+    const baseLeaderboardUrl = leaderboardUrl.split('&_t=')[0]; // Remove timestamp if present
+    const currentBaseUrl = currentEmbedUrl.split('&_t=')[0];
+    
+    // Always navigate, add timestamp to force reload if already on same page
+    const urlWithTimestamp = currentView === 'embed' && currentBaseUrl === baseLeaderboardUrl
+      ? `${leaderboardUrl}&_t=${Date.now()}`
+      : leaderboardUrl;
+    
+    navigateToView('embed', urlWithTimestamp);
   };
 
   const handleSelectCategory = (category: string) => {
@@ -258,7 +276,7 @@ export default function App() {
         ) : currentView === 'embed' ? (
           /* Genially Embed View (Calendar, Games, Media, etc.) */
           <motion.div
-            key="embed"
+            key={`embed-${currentEmbedUrl}`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -273,8 +291,9 @@ export default function App() {
               onProfileClick={() => setShowProfileModal(true)}
               currentView={currentView}
             />
-            <div className="flex-1 relative overflow-hidden">
+            <div className="flex-1 relative overflow-hidden z-0">
               <GeniallyEmbed
+                key={currentEmbedUrl}
                 url={currentEmbedUrl}
                 title="Genially Content"
                 onError={handleBackToHome}
@@ -591,7 +610,7 @@ export default function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 z-40"
+              className="fixed inset-0 bg-black/50 z-[10000]"
               onClick={() => setShowAlertsModal(false)}
             />
             
@@ -600,7 +619,7 @@ export default function App() {
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 50 }}
-              className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-md mx-auto bg-white rounded-3xl shadow-2xl z-50 max-h-[80vh] overflow-y-auto"
+              className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-md mx-auto bg-white rounded-3xl shadow-2xl z-[10001] max-h-[80vh] overflow-y-auto"
             >
               <div className="sticky top-0 bg-white border-b border-[#E8E6E0] px-6 py-4 rounded-t-3xl flex items-center justify-between">
                 <div>
@@ -687,7 +706,7 @@ export default function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 z-40"
+              className="fixed inset-0 bg-black/50 z-[10000]"
               onClick={() => setShowProfileModal(false)}
             />
             
@@ -696,7 +715,7 @@ export default function App() {
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 50 }}
-              className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-md mx-auto bg-white rounded-3xl shadow-2xl z-50 max-h-[80vh] overflow-y-auto"
+              className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-md mx-auto bg-white rounded-3xl shadow-2xl z-[10001] max-h-[80vh] overflow-y-auto"
             >
               <div className="sticky top-0 bg-white border-b border-[#E8E6E0] px-6 py-4 rounded-t-3xl flex items-center justify-between">
                 <div>

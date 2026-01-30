@@ -53,11 +53,12 @@ export function GeniallyEmbed({
   }
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full z-0">
       <iframe
+        key={url}
         src={url}
         title={title || 'Genially Content'}
-        className="absolute inset-0 w-full h-full border-0"
+        className="absolute inset-0 w-full h-full border-0 z-0"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
         sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals allow-orientation-lock allow-pointer-lock allow-presentation"
         onError={handleIframeError}

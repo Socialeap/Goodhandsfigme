@@ -37,7 +37,8 @@ export function NavigationBar({
       initial={{ y: -60, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="sticky top-0 z-50 bg-white border-b border-[#E8E6E0] shadow-sm"
+      className="sticky top-0 z-[9999] bg-white border-b border-[#E8E6E0] shadow-sm isolate"
+      style={{ isolation: 'isolate' }}
     >
       <div className="flex items-center justify-between px-3 py-3 sm:py-2 max-w-7xl mx-auto">
         {/* Primary Navigation */}
