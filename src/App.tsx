@@ -5,6 +5,12 @@ import { ResourcesHub } from './components/ResourcesHub';
 import { ResourcesList } from './components/ResourcesList';
 import { DailyCheckIn } from './components/DailyCheckIn';
 import { DemoToggleButton } from './components/DemoToggleButton';
+import { GeniallyEmbed } from './components/GeniallyEmbed';
+import { NavigationBar } from './components/NavigationBar';
+
+type ViewType = 'startup' | 'provider' | 'home' | 'resources' | 'resourcesList' | 'dailyCheckIn' | 'embed';
+
+const GENIALLY_BASE = 'https://view.genially.com/69499a7c6254c506cf6422ac';
 
 export default function App() {
   const [isPressing, setIsPressing] = useState(false);
@@ -14,9 +20,12 @@ export default function App() {
   const [showAlertsModal, setShowAlertsModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showSettingsInfo, setShowSettingsInfo] = useState(false);
-  const [currentView, setCurrentView] = useState<'home' | 'resources' | 'resourcesList' | 'dailyCheckIn'>('home');
+  // Always start at startup page - don't restore from localStorage
+  // This ensures users always see the entry point (Member/Provider selection)
+  const [currentView, setCurrentView] = useState<ViewType>('startup');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [showDemoAnnotations, setShowDemoAnnotations] = useState(false);
+  const [currentEmbedUrl, setCurrentEmbedUrl] = useState<string>('');
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -49,7 +58,8 @@ export default function App() {
       color: 'bg-[#E8A846]', // Brand Gold - high priority
       iconColor: 'text-[#2D2D2D]',
       description: "A quick tap to let us know you're doing okay today.",
-      action: 'dailyCheckIn'
+      action: 'dailyCheckIn',
+      embedUrl: null
     },
     { 
       id: 2, 
@@ -58,7 +68,8 @@ export default function App() {
       color: 'bg-[#8BA888]', // Soft Sage - calm social activity
       iconColor: 'text-[#2D2D2D]',
       description: "Enjoy simple, fun games that keep your mind active and lift your spirits.",
-      action: null
+      action: null,
+      embedUrl: `${GENIALLY_BASE}?idSlide=c2638c0c-88b2-4441-809f-d2f2fc316a7d`
     },
     { 
       id: 3, 
@@ -67,7 +78,8 @@ export default function App() {
       color: 'bg-[#5B9BD5]', // Warm Blue - social activity
       iconColor: 'text-[#2D2D2D]',
       description: "Join real-time classes, events, and social sessions happening right now.",
-      action: null
+      action: null,
+      embedUrl: `${GENIALLY_BASE}?idSlide=3e6e8313-2e3f-465c-a09d-76aeea506121`
     },
     { 
       id: 4, 
@@ -76,7 +88,8 @@ export default function App() {
       color: 'bg-[#8BA888]', // Soft Sage - calm activity
       iconColor: 'text-[#2D2D2D]',
       description: "Browse photos and moments shared by your Good Hands community.",
-      action: null
+      action: null,
+      embedUrl: `${GENIALLY_BASE}?idSlide=8551be36-354a-43c1-9f32-f6f22270122e`
     },
     { 
       id: 5, 
@@ -85,7 +98,8 @@ export default function App() {
       color: 'bg-[#5B9BD5]', // Warm Blue - informational
       iconColor: 'text-[#2D2D2D]',
       description: "See all of your upcoming activities, classes, and special events.",
-      action: null
+      action: null,
+      embedUrl: `${GENIALLY_BASE}?idSlide=f9cd8a38-2b06-4ef7-a774-ed04a4f9042d`
     },
     { 
       id: 6, 
@@ -94,7 +108,8 @@ export default function App() {
       color: 'bg-[#E8A846]', // Brand Gold - high priority/urgent
       iconColor: 'text-[#2D2D2D]',
       description: "Ask for assistance or support whenever you need it — we're here for you.",
-      action: null
+      action: null,
+      embedUrl: null
     },
     { 
       id: 7, 
@@ -103,34 +118,93 @@ export default function App() {
       color: 'bg-[#2563A8]', // Brand Blue - navigation/stability
       iconColor: 'text-white',
       description: "Find nearby pharmacies, food support, clinics, and community services.",
-      action: 'resources'
+      action: 'resources',
+      embedUrl: null
     },
   ];
 
+  // Note: View persistence disabled - app always starts at startup page
+  // If you want to restore last view on reload, uncomment below and modify initialization:
+  // useEffect(() => {
+  //   if (currentView !== 'startup' && currentView !== 'provider') {
+  //     localStorage.setItem('goodhands_last_view', currentView);
+  //   }
+  // }, [currentView]);
+
+  // Keyboard navigation: Escape key returns to home
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && currentView !== 'startup' && currentView !== 'home') {
+        navigateToView('home');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentView]);
+
+  const navigateToView = (view: ViewType, embedUrl?: string) => {
+    setCurrentView(view);
+    if (embedUrl) {
+      setCurrentEmbedUrl(embedUrl);
+    } else if (view === 'embed' && !embedUrl) {
+      // Safety: If navigating to embed without URL, go home instead
+      console.warn('Attempted to navigate to embed view without URL, redirecting to home');
+      setCurrentView('home');
+    }
+    setFlippedCard(null);
+  };
+
   const handleTileClick = (tile: typeof tiles[0]) => {
-    if (tile.action === 'resources') {
-      setCurrentView('resources');
-      setFlippedCard(null);
+    if (tile.embedUrl) {
+      navigateToView('embed', tile.embedUrl);
+    } else if (tile.action === 'resources') {
+      navigateToView('resources');
     } else if (tile.action === 'dailyCheckIn') {
-      setCurrentView('dailyCheckIn');
-      setFlippedCard(null);
+      navigateToView('dailyCheckIn');
     } else {
       setFlippedCard(tile.id);
     }
   };
 
+  const handleNavHome = () => {
+    if (currentView !== 'home') {
+      navigateToView('home');
+    }
+  };
+
+  const handleNavCalendar = () => {
+    const calendarUrl = `${GENIALLY_BASE}?idSlide=f9cd8a38-2b06-4ef7-a774-ed04a4f9042d`;
+    if (currentView !== 'embed' || currentEmbedUrl !== calendarUrl) {
+      navigateToView('embed', calendarUrl);
+    }
+  };
+
+  const handleNavGames = () => {
+    const gamesUrl = `${GENIALLY_BASE}?idSlide=c2638c0c-88b2-4441-809f-d2f2fc316a7d`;
+    if (currentView !== 'embed' || currentEmbedUrl !== gamesUrl) {
+      navigateToView('embed', gamesUrl);
+    }
+  };
+
+  const handleNavLeaderboard = () => {
+    const leaderboardUrl = `${GENIALLY_BASE}?idSlide=00ea8673-0fd5-4c37-ae16-c263fdf26021`;
+    if (currentView !== 'embed' || currentEmbedUrl !== leaderboardUrl) {
+      navigateToView('embed', leaderboardUrl);
+    }
+  };
+
   const handleSelectCategory = (category: string) => {
     setSelectedCategory(category);
-    setCurrentView('resourcesList');
+    navigateToView('resourcesList');
   };
 
   const handleBackToHome = () => {
-    setCurrentView('home');
+    navigateToView('home');
     setSelectedCategory('');
   };
 
   const handleBackToResources = () => {
-    setCurrentView('resources');
+    navigateToView('resources');
     setSelectedCategory('');
   };
 
@@ -143,76 +217,180 @@ export default function App() {
     setIsListening(false);
   };
 
+  // Show navigation bar on all views except startup and provider
+  const showNavBar = currentView !== 'startup' && currentView !== 'provider';
+
   return (
-    <div className="min-h-screen bg-[#FBF8F3] flex flex-col safe-area-inset">
+    <div className="h-full w-full bg-[#FBF8F3] flex flex-col overflow-hidden safe-area-inset">
       <AnimatePresence mode="wait">
-        {currentView === 'dailyCheckIn' ? (
-          <DailyCheckIn
+        {/* Startup Page with Member Overlay */}
+        {currentView === 'startup' ? (
+          <motion.div
+            key="startup"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="h-full w-full"
+          >
+            <GeniallyEmbed
+              url={`${GENIALLY_BASE}?idSlide=93c55ad7-5d50-4f72-9578-2e1bc7779e06`}
+              title="Good Hands Startup"
+              showMemberOverlay={true}
+              onMemberClick={() => navigateToView('home')}
+              onError={handleBackToHome}
+            />
+          </motion.div>
+        ) : currentView === 'provider' ? (
+          /* Provider Portal Page */
+          <motion.div
+            key="provider"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="h-full w-full"
+          >
+            <GeniallyEmbed
+              url={`${GENIALLY_BASE}?idSlide=99f1842f-c126-493e-992a-9a20e0d8c6d1`}
+              title="Provider Portal"
+              onError={() => navigateToView('startup')}
+            />
+          </motion.div>
+        ) : currentView === 'embed' ? (
+          /* Genially Embed View (Calendar, Games, Media, etc.) */
+          <motion.div
+            key="embed"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex flex-col h-full w-full"
+          >
+            <NavigationBar
+              onHomeClick={handleNavHome}
+              onCalendarClick={handleNavCalendar}
+              onGamesClick={handleNavGames}
+              onLeaderboardClick={handleNavLeaderboard}
+              onBellClick={() => setShowAlertsModal(true)}
+              onProfileClick={() => setShowProfileModal(true)}
+              currentView={currentView}
+            />
+            <div className="flex-1 relative overflow-hidden">
+              <GeniallyEmbed
+                url={currentEmbedUrl}
+                title="Genially Content"
+                onError={handleBackToHome}
+              />
+            </div>
+          </motion.div>
+        ) : currentView === 'dailyCheckIn' ? (
+          /* Daily Check-In Component */
+          <motion.div
             key="daily-check-in"
-            userName="Felix"
-            onClose={handleBackToHome}
-            onNavigateToResources={() => setCurrentView('resources')}
-          />
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex flex-col h-full w-full"
+          >
+            <NavigationBar
+              onHomeClick={handleNavHome}
+              onCalendarClick={handleNavCalendar}
+              onGamesClick={handleNavGames}
+              onLeaderboardClick={handleNavLeaderboard}
+              onBellClick={() => setShowAlertsModal(true)}
+              onProfileClick={() => setShowProfileModal(true)}
+              currentView={currentView}
+            />
+            <div className="flex-1 overflow-auto">
+              <DailyCheckIn
+                userName="Felix"
+                onClose={handleBackToHome}
+                onNavigateToResources={() => navigateToView('resources')}
+              />
+            </div>
+          </motion.div>
         ) : currentView === 'resources' ? (
-          <ResourcesHub
+          /* Resources Hub Component */
+          <motion.div
             key="resources-hub"
-            onSelectCategory={handleSelectCategory}
-            onBack={handleBackToHome}
-            showDemoAnnotations={showDemoAnnotations}
-          />
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex flex-col h-full w-full"
+          >
+            <NavigationBar
+              onHomeClick={handleNavHome}
+              onCalendarClick={handleNavCalendar}
+              onGamesClick={handleNavGames}
+              onLeaderboardClick={handleNavLeaderboard}
+              onBellClick={() => setShowAlertsModal(true)}
+              onProfileClick={() => setShowProfileModal(true)}
+              currentView={currentView}
+            />
+            <div className="flex-1 overflow-auto">
+              <ResourcesHub
+                onSelectCategory={handleSelectCategory}
+                onBack={handleBackToHome}
+                showDemoAnnotations={showDemoAnnotations}
+              />
+            </div>
+          </motion.div>
         ) : currentView === 'resourcesList' ? (
-          <ResourcesList
+          /* Resources List Component */
+          <motion.div
             key="resources-list"
-            category={selectedCategory}
-            onBack={handleBackToResources}
-            showDemoAnnotations={showDemoAnnotations}
-          />
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex flex-col h-full w-full"
+          >
+            <NavigationBar
+              onHomeClick={handleNavHome}
+              onCalendarClick={handleNavCalendar}
+              onGamesClick={handleNavGames}
+              onLeaderboardClick={handleNavLeaderboard}
+              onBellClick={() => setShowAlertsModal(true)}
+              onProfileClick={() => setShowProfileModal(true)}
+              currentView={currentView}
+            />
+            <div className="flex-1 overflow-auto">
+              <ResourcesList
+                category={selectedCategory}
+                onBack={handleBackToResources}
+                showDemoAnnotations={showDemoAnnotations}
+              />
+            </div>
+          </motion.div>
         ) : !isListening ? (
+          /* Home View - Tile Menu */
           <motion.div
             key="main-view"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="flex flex-col min-h-screen"
+            className="flex flex-col h-full w-full"
           >
-            {/* Top Area */}
-            <header className="px-4 pt-4 pb-3 sm:px-6 sm:pt-6 sm:pb-4">
-              <div className="flex items-start justify-between mb-2 gap-3">
-                <div className="flex-1 min-w-0">
-                  <p className="text-[#2D2D2D] text-sm sm:text-base">Good Morning, Felix</p>
-                  <p className="text-[#2D2D2D] text-sm sm:text-base">You're in Good Hands</p>
-                </div>
-                
-                {/* Alert Bell and Profile Buttons */}
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  {/* Alert Bell with Badge */}
-                  <button
-                    onClick={() => setShowAlertsModal(true)}
-                    className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-[#E8A846] to-[#d99835] border-4 border-white shadow-lg flex items-center justify-center active:scale-95 transition-transform"
-                  >
-                    <Bell className="w-6 h-6 sm:w-7 sm:h-7 text-white" strokeWidth={2.5} />
-                    <span className="absolute -top-1 -right-1 w-6 h-6 bg-[#d4183d] text-white text-xs rounded-full flex items-center justify-center border-2 border-white shadow-md">
-                      3
-                    </span>
-                  </button>
+            {/* Navigation Bar */}
+            <NavigationBar
+              onHomeClick={handleNavHome}
+              onCalendarClick={handleNavCalendar}
+              onGamesClick={handleNavGames}
+              onLeaderboardClick={handleNavLeaderboard}
+              onBellClick={() => setShowAlertsModal(true)}
+              onProfileClick={() => setShowProfileModal(true)}
+              currentView={currentView}
+            />
 
-                  {/* Profile Button */}
-                  <button
-                    onClick={() => setShowProfileModal(true)}
-                    className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-[#5B9BD5] to-[#2563A8] border-4 border-white shadow-lg flex items-center justify-center active:scale-95 transition-transform"
-                  >
-                    <User className="w-6 h-6 sm:w-7 sm:h-7 text-white" strokeWidth={2.5} />
-                  </button>
-                </div>
-              </div>
+            {/* Top Area */}
+            <header className="px-4 pt-3 pb-2 sm:px-6 sm:pt-4 sm:pb-3">
               <div className="text-center">
+                <p className="text-[#2D2D2D] text-base sm:text-lg mb-1">Good Morning, Felix</p>
+                <p className="text-[#2D2D2D] text-sm sm:text-base mb-2">You're in Good Hands</p>
                 <p className="text-[#2D2D2D] text-sm sm:text-base">{formatDate(currentTime)}</p>
                 <p className="text-[#6B6B6B] text-sm sm:text-base">{formatTime(currentTime)}</p>
               </div>
             </header>
 
             {/* Middle Area - Tile Grid */}
-            <main className="flex-1 px-4 py-3 sm:px-6 sm:py-6">
+            <main className="flex-1 px-4 py-2 sm:px-6 sm:py-4 overflow-auto">
               <div className="grid grid-cols-2 gap-3 max-w-md mx-auto sm:gap-4">
                 {tiles.map((tile) => {
                   const Icon = tile.icon;
@@ -261,7 +439,7 @@ export default function App() {
             </main>
 
             {/* Bottom Area - Walkie-Talkie Voice Button */}
-            <div className="px-4 pb-4 sm:px-6 sm:pb-6 flex flex-col items-center gap-3 sm:gap-6">
+            <div className="px-4 pb-3 sm:px-6 sm:pb-4 flex flex-col items-center gap-2 sm:gap-4 flex-shrink-0">
               <div className="flex flex-col items-center">
                 <button
                   onMouseDown={() => setIsPressing(true)}
@@ -270,217 +448,19 @@ export default function App() {
                   onTouchStart={() => setIsPressing(true)}
                   onTouchEnd={() => setIsPressing(false)}
                   onClick={handleMicClick}
-                  className={`w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-gradient-to-br from-blue-400 to-blue-500 shadow-2xl flex flex-col items-center justify-center gap-1 transition-all ${
+                  className={`w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-blue-400 to-blue-500 shadow-2xl flex flex-col items-center justify-center gap-1 transition-all ${
                     isPressing ? 'scale-95 shadow-lg' : 'hover:scale-105'
                   }`}
                 >
-                  <Mic className="w-10 h-10 sm:w-12 sm:h-12 text-white" strokeWidth={3} />
+                  <Mic className="w-8 h-8 sm:w-10 sm:h-10 text-white" strokeWidth={3} />
                   <span className="text-white text-xs">Click to Speak</span>
                 </button>
-                <p className="text-slate-600 text-center text-xs mt-2 px-6 sm:mt-3 sm:px-8">
+                <p className="text-slate-600 text-center text-xs mt-2 px-6">
                   The app will listen and guide you.
                 </p>
               </div>
             </div>
 
-            {/* Alerts Modal */}
-            <AnimatePresence>
-              {showAlertsModal && (
-                <>
-                  {/* Backdrop */}
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 bg-black/50 z-40"
-                    onClick={() => setShowAlertsModal(false)}
-                  />
-                  
-                  {/* Modal */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 50 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 50 }}
-                    className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-md mx-auto bg-white rounded-3xl shadow-2xl z-50 max-h-[80vh] overflow-y-auto"
-                  >
-                    <div className="sticky top-0 bg-white border-b border-[#E8E6E0] px-6 py-4 rounded-t-3xl flex items-center justify-between">
-                      <div>
-                        <h2 className="text-[#2D2D2D] text-lg">Alerts</h2>
-                        <p className="text-[#6B6B6B] text-xs">You have 3 new alerts</p>
-                      </div>
-                      <button
-                        onClick={() => setShowAlertsModal(false)}
-                        className="w-10 h-10 flex items-center justify-center text-[#6B6B6B] hover:bg-[#F5F5F0] rounded-full transition-colors"
-                      >
-                        <X className="w-6 h-6" />
-                      </button>
-                    </div>
-
-                    <div className="p-6 space-y-4">
-                      {/* Alert 1 - Account */}
-                      <div className="bg-[#FBF8F3] rounded-3xl p-5 border-l-4 border-[#2563A8]">
-                        <div className="flex items-start gap-3">
-                          <div className="w-10 h-10 rounded-full bg-[#2563A8] flex items-center justify-center flex-shrink-0">
-                            <User className="w-5 h-5 text-white" />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="text-[#2D2D2D] text-sm mb-1">Account Update</h3>
-                            <p className="text-[#6B6B6B] text-xs leading-relaxed mb-2">
-                              Your profile information has been successfully updated. Your preferences are now saved.
-                            </p>
-                            <span className="text-[#6B6B6B] text-xs">2 hours ago</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Alert 2 - Messages */}
-                      <div className="bg-[#FBF8F3] rounded-3xl p-5 border-l-4 border-[#8BA888]">
-                        <div className="flex items-start gap-3">
-                          <div className="w-10 h-10 rounded-full bg-[#8BA888] flex items-center justify-center flex-shrink-0">
-                            <Bell className="w-5 h-5 text-white" />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="text-[#2D2D2D] text-sm mb-1">New Message</h3>
-                            <p className="text-[#6B6B6B] text-xs leading-relaxed mb-2">
-                              You have a new message from your care coordinator. They've shared updates about your upcoming activities.
-                            </p>
-                            <span className="text-[#6B6B6B] text-xs">5 hours ago</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Alert 3 - Reminders */}
-                      <div className="bg-[#FBF8F3] rounded-3xl p-5 border-l-4 border-[#E8A846]">
-                        <div className="flex items-start gap-3">
-                          <div className="w-10 h-10 rounded-full bg-[#E8A846] flex items-center justify-center flex-shrink-0">
-                            <Calendar className="w-5 h-5 text-white" />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="text-[#2D2D2D] text-sm mb-1">Reminder: Upcoming Event</h3>
-                            <p className="text-[#6B6B6B] text-xs leading-relaxed mb-2">
-                              Don't forget! You have "Chair Yoga" scheduled for tomorrow at 10:00 AM. See you there!
-                            </p>
-                            <span className="text-[#6B6B6B] text-xs">Yesterday</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="p-6 pt-0">
-                      <button
-                        onClick={() => setShowAlertsModal(false)}
-                        className="w-full bg-gradient-to-br from-[#2563A8] to-[#1e4d87] text-white py-4 rounded-3xl shadow-lg hover:shadow-xl transition-all active:scale-95"
-                      >
-                        Close
-                      </button>
-                    </div>
-                  </motion.div>
-                </>
-              )}
-            </AnimatePresence>
-
-            {/* Profile Modal */}
-            <AnimatePresence>
-              {showProfileModal && (
-                <>
-                  {/* Backdrop */}
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 bg-black/50 z-40"
-                    onClick={() => setShowProfileModal(false)}
-                  />
-                  
-                  {/* Modal */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 50 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 50 }}
-                    className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-md mx-auto bg-white rounded-3xl shadow-2xl z-50 max-h-[80vh] overflow-y-auto"
-                  >
-                    <div className="sticky top-0 bg-white border-b border-[#E8E6E0] px-6 py-4 rounded-t-3xl flex items-center justify-between">
-                      <div>
-                        <h2 className="text-[#2D2D2D] text-lg">Profile & Settings</h2>
-                        <p className="text-[#6B6B6B] text-xs">Felix Thompson</p>
-                      </div>
-                      <button
-                        onClick={() => setShowProfileModal(false)}
-                        className="w-10 h-10 flex items-center justify-center text-[#6B6B6B] hover:bg-[#F5F5F0] rounded-full transition-colors"
-                      >
-                        <X className="w-6 h-6" />
-                      </button>
-                    </div>
-
-                    <div className="p-6 space-y-3">
-                      {/* Profile Info */}
-                      <button className="w-full bg-[#FBF8F3] hover:bg-[#F5F5F0] rounded-3xl p-5 flex items-center gap-4 transition-all active:scale-95 shadow-md">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#5B9BD5] to-[#2563A8] flex items-center justify-center flex-shrink-0">
-                          <User className="w-6 h-6 text-white" />
-                        </div>
-                        <div className="flex-1 text-left">
-                          <h3 className="text-[#2D2D2D] text-sm">My Profile</h3>
-                          <p className="text-[#6B6B6B] text-xs">View and edit your personal information</p>
-                        </div>
-                      </button>
-
-                      {/* Preferences */}
-                      <button className="w-full bg-[#FBF8F3] hover:bg-[#F5F5F0] rounded-3xl p-5 flex items-center gap-4 transition-all active:scale-95 shadow-md">
-                        <div className="w-12 h-12 rounded-full bg-[#8BA888] flex items-center justify-center flex-shrink-0">
-                          <Heart className="w-6 h-6 text-white" />
-                        </div>
-                        <div className="flex-1 text-left">
-                          <h3 className="text-[#2D2D2D] text-sm">Preferences</h3>
-                          <p className="text-[#6B6B6B] text-xs">Customize your app experience</p>
-                        </div>
-                      </button>
-
-                      {/* Accessibility */}
-                      <button className="w-full bg-[#FBF8F3] hover:bg-[#F5F5F0] rounded-3xl p-5 flex items-center gap-4 transition-all active:scale-95 shadow-md">
-                        <div className="w-12 h-12 rounded-full bg-[#5B9BD5] flex items-center justify-center flex-shrink-0">
-                          <Settings className="w-6 h-6 text-white" />
-                        </div>
-                        <div className="flex-1 text-left">
-                          <h3 className="text-[#2D2D2D] text-sm">Accessibility</h3>
-                          <p className="text-[#6B6B6B] text-xs">Adjust text size, contrast, and more</p>
-                        </div>
-                      </button>
-
-                      {/* App Settings */}
-                      <button className="w-full bg-[#FBF8F3] hover:bg-[#F5F5F0] rounded-3xl p-5 flex items-center gap-4 transition-all active:scale-95 shadow-md">
-                        <div className="w-12 h-12 rounded-full bg-[#E8A846] flex items-center justify-center flex-shrink-0">
-                          <Settings className="w-6 h-6 text-white" />
-                        </div>
-                        <div className="flex-1 text-left">
-                          <h3 className="text-[#2D2D2D] text-sm">App Settings</h3>
-                          <p className="text-[#6B6B6B] text-xs">Notifications, privacy, and security</p>
-                        </div>
-                      </button>
-
-                      {/* Logout */}
-                      <button className="w-full bg-[#FBF8F3] hover:bg-[#F5F5F0] rounded-3xl p-5 flex items-center gap-4 transition-all active:scale-95 shadow-md border-2 border-[#d4183d]/20">
-                        <div className="w-12 h-12 rounded-full bg-[#d4183d] flex items-center justify-center flex-shrink-0">
-                          <X className="w-6 h-6 text-white" />
-                        </div>
-                        <div className="flex-1 text-left">
-                          <h3 className="text-[#d4183d] text-sm">Log Out</h3>
-                          <p className="text-[#6B6B6B] text-xs">Sign out of your account</p>
-                        </div>
-                      </button>
-                    </div>
-
-                    <div className="p-6 pt-0">
-                      <button
-                        onClick={() => setShowProfileModal(false)}
-                        className="w-full bg-gradient-to-br from-[#2563A8] to-[#1e4d87] text-white py-4 rounded-3xl shadow-lg hover:shadow-xl transition-all active:scale-95"
-                      >
-                        Close
-                      </button>
-                    </div>
-                  </motion.div>
-                </>
-              )}
-            </AnimatePresence>
           </motion.div>
         ) : (
           <motion.div
@@ -600,6 +580,207 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Global Modals - Available on all views */}
+      {/* Alerts Modal */}
+      <AnimatePresence>
+        {showAlertsModal && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 z-40"
+              onClick={() => setShowAlertsModal(false)}
+            />
+            
+            {/* Modal */}
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 50 }}
+              className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-md mx-auto bg-white rounded-3xl shadow-2xl z-50 max-h-[80vh] overflow-y-auto"
+            >
+              <div className="sticky top-0 bg-white border-b border-[#E8E6E0] px-6 py-4 rounded-t-3xl flex items-center justify-between">
+                <div>
+                  <h2 className="text-[#2D2D2D] text-lg">Alerts</h2>
+                  <p className="text-[#6B6B6B] text-xs">You have 3 new alerts</p>
+                </div>
+                <button
+                  onClick={() => setShowAlertsModal(false)}
+                  className="w-10 h-10 flex items-center justify-center text-[#6B6B6B] hover:bg-[#F5F5F0] rounded-full transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4">
+                {/* Alert 1 - Account */}
+                <div className="bg-[#FBF8F3] rounded-3xl p-5 border-l-4 border-[#2563A8]">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#2563A8] flex items-center justify-center flex-shrink-0">
+                      <User className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-[#2D2D2D] text-sm mb-1">Account Update</h3>
+                      <p className="text-[#6B6B6B] text-xs leading-relaxed mb-2">
+                        Your profile information has been successfully updated. Your preferences are now saved.
+                      </p>
+                      <span className="text-[#6B6B6B] text-xs">2 hours ago</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Alert 2 - Messages */}
+                <div className="bg-[#FBF8F3] rounded-3xl p-5 border-l-4 border-[#8BA888]">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#8BA888] flex items-center justify-center flex-shrink-0">
+                      <Bell className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-[#2D2D2D] text-sm mb-1">New Message</h3>
+                      <p className="text-[#6B6B6B] text-xs leading-relaxed mb-2">
+                        You have a new message from your care coordinator. They've shared updates about your upcoming activities.
+                      </p>
+                      <span className="text-[#6B6B6B] text-xs">5 hours ago</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Alert 3 - Reminders */}
+                <div className="bg-[#FBF8F3] rounded-3xl p-5 border-l-4 border-[#E8A846]">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#E8A846] flex items-center justify-center flex-shrink-0">
+                      <Calendar className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-[#2D2D2D] text-sm mb-1">Reminder: Upcoming Event</h3>
+                      <p className="text-[#6B6B6B] text-xs leading-relaxed mb-2">
+                        Don't forget! You have "Chair Yoga" scheduled for tomorrow at 10:00 AM. See you there!
+                      </p>
+                      <span className="text-[#6B6B6B] text-xs">Yesterday</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 pt-0">
+                <button
+                  onClick={() => setShowAlertsModal(false)}
+                  className="w-full bg-gradient-to-br from-[#2563A8] to-[#1e4d87] text-white py-4 rounded-3xl shadow-lg hover:shadow-xl transition-all active:scale-95"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Profile Modal */}
+      <AnimatePresence>
+        {showProfileModal && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 z-40"
+              onClick={() => setShowProfileModal(false)}
+            />
+            
+            {/* Modal */}
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 50 }}
+              className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-md mx-auto bg-white rounded-3xl shadow-2xl z-50 max-h-[80vh] overflow-y-auto"
+            >
+              <div className="sticky top-0 bg-white border-b border-[#E8E6E0] px-6 py-4 rounded-t-3xl flex items-center justify-between">
+                <div>
+                  <h2 className="text-[#2D2D2D] text-lg">Profile & Settings</h2>
+                  <p className="text-[#6B6B6B] text-xs">Felix Thompson</p>
+                </div>
+                <button
+                  onClick={() => setShowProfileModal(false)}
+                  className="w-10 h-10 flex items-center justify-center text-[#6B6B6B] hover:bg-[#F5F5F0] rounded-full transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-3">
+                {/* Profile Info */}
+                <button className="w-full bg-[#FBF8F3] hover:bg-[#F5F5F0] rounded-3xl p-5 flex items-center gap-4 transition-all active:scale-95 shadow-md">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#5B9BD5] to-[#2563A8] flex items-center justify-center flex-shrink-0">
+                    <User className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <h3 className="text-[#2D2D2D] text-sm">My Profile</h3>
+                    <p className="text-[#6B6B6B] text-xs">View and edit your personal information</p>
+                  </div>
+                </button>
+
+                {/* Preferences */}
+                <button className="w-full bg-[#FBF8F3] hover:bg-[#F5F5F0] rounded-3xl p-5 flex items-center gap-4 transition-all active:scale-95 shadow-md">
+                  <div className="w-12 h-12 rounded-full bg-[#8BA888] flex items-center justify-center flex-shrink-0">
+                    <Heart className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <h3 className="text-[#2D2D2D] text-sm">Preferences</h3>
+                    <p className="text-[#6B6B6B] text-xs">Customize your app experience</p>
+                  </div>
+                </button>
+
+                {/* Accessibility */}
+                <button className="w-full bg-[#FBF8F3] hover:bg-[#F5F5F0] rounded-3xl p-5 flex items-center gap-4 transition-all active:scale-95 shadow-md">
+                  <div className="w-12 h-12 rounded-full bg-[#5B9BD5] flex items-center justify-center flex-shrink-0">
+                    <Settings className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <h3 className="text-[#2D2D2D] text-sm">Accessibility</h3>
+                    <p className="text-[#6B6B6B] text-xs">Adjust text size, contrast, and more</p>
+                  </div>
+                </button>
+
+                {/* App Settings */}
+                <button className="w-full bg-[#FBF8F3] hover:bg-[#F5F5F0] rounded-3xl p-5 flex items-center gap-4 transition-all active:scale-95 shadow-md">
+                  <div className="w-12 h-12 rounded-full bg-[#E8A846] flex items-center justify-center flex-shrink-0">
+                    <Settings className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <h3 className="text-[#2D2D2D] text-sm">App Settings</h3>
+                    <p className="text-[#6B6B6B] text-xs">Notifications, privacy, and security</p>
+                  </div>
+                </button>
+
+                {/* Logout */}
+                <button className="w-full bg-[#FBF8F3] hover:bg-[#F5F5F0] rounded-3xl p-5 flex items-center gap-4 transition-all active:scale-95 shadow-md border-2 border-[#d4183d]/20">
+                  <div className="w-12 h-12 rounded-full bg-[#d4183d] flex items-center justify-center flex-shrink-0">
+                    <X className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <h3 className="text-[#d4183d] text-sm">Log Out</h3>
+                    <p className="text-[#6B6B6B] text-xs">Sign out of your account</p>
+                  </div>
+                </button>
+              </div>
+
+              <div className="p-6 pt-0">
+                <button
+                  onClick={() => setShowProfileModal(false)}
+                  className="w-full bg-gradient-to-br from-[#2563A8] to-[#1e4d87] text-white py-4 rounded-3xl shadow-lg hover:shadow-xl transition-all active:scale-95"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       <DemoToggleButton
         showAnnotations={showDemoAnnotations}
         onToggleAnnotations={setShowDemoAnnotations}
