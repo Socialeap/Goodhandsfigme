@@ -2,38 +2,49 @@
 
 :root {
   --font-size: 16px; /* Standard base font size for mobile */
-  --background: #ffffff;
-  --foreground: oklch(0.145 0 0);
+  --background: #FBF8F3; /* Warm Parchment background */
+  --foreground: #2D2D2D; /* Deep Charcoal for text */
   --card: #ffffff;
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: #2D2D2D;
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: #030213;
+  --popover-foreground: #2D2D2D;
+  --primary: #2563A8; /* GoodHands Brand Blue */
   --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.95 0.0058 264.53);
-  --secondary-foreground: #030213;
-  --muted: #ececf0;
-  --muted-foreground: #717182;
-  --accent: #e9ebef;
-  --accent-foreground: #030213;
+  --secondary: #F5F5F0; /* Soft neutral */
+  --secondary-foreground: #2D2D2D;
+  --muted: #E8E6E0;
+  --muted-foreground: #6B6B6B;
+  --accent: #E9EBF0;
+  --accent-foreground: #2D2D2D;
   --destructive: #d4183d;
   --destructive-foreground: #ffffff;
-  --border: rgba(0, 0, 0, 0.1);
+  --border: rgba(45, 45, 45, 0.12);
   --input: transparent;
-  --input-background: #f3f3f5;
+  --input-background: #F5F5F0;
   --switch-background: #cbced4;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
   --ring: oklch(0.708 0 0);
+  
+  /* GoodHands Brand Colors */
+  --brand-blue: #2563A8; /* Primary Blue for navigation & stability */
+  --brand-gold: #E8A846; /* Gold/Orange for high-priority actions */
+  --warm-sage: #8BA888; /* Soft Sage Green for calm social activities */
+  --warm-blue: #5B9BD5; /* Lighter blue for activities */
+  --deep-charcoal: #2D2D2D; /* For icons and text */
+  --warm-parchment: #FBF8F3; /* Background */
+  --warm-sand: #F7F3ED; /* Alternate background */
+  --soft-cream: #FEFCF9; /* Card backgrounds */
+  
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.625rem;
+  --radius: 1.5rem; /* Increased to 24px for soft, friendly feel */
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: #030213;
+  --sidebar-primary: #2563A8;
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.97 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);

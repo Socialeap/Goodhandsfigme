@@ -1,15 +1,22 @@
 import { useState, useEffect } from 'react';
-import { Check, Mic, Home, Bell, Settings, Calendar, Gamepad2, FolderOpen, Radio, Heart, User, X } from 'lucide-react';
+import { Check, Mic, Home, Bell, Settings, Calendar, Gamepad2, FolderOpen, Radio, Heart, User, X, BookOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ResourcesHub } from './components/ResourcesHub';
+import { ResourcesList } from './components/ResourcesList';
+import { DailyCheckIn } from './components/DailyCheckIn';
+import { DemoToggleButton } from './components/DemoToggleButton';
 
 export default function App() {
   const [isPressing, setIsPressing] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [flippedCard, setFlippedCard] = useState<number | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [showProfileInfo, setShowProfileInfo] = useState(false);
-  const [showAlertsInfo, setShowAlertsInfo] = useState(false);
+  const [showAlertsModal, setShowAlertsModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [showSettingsInfo, setShowSettingsInfo] = useState(false);
+  const [currentView, setCurrentView] = useState<'home' | 'resources' | 'resourcesList' | 'dailyCheckIn'>('home');
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [showDemoAnnotations, setShowDemoAnnotations] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -39,45 +46,93 @@ export default function App() {
       id: 1, 
       label: 'Daily Check-In', 
       icon: Check, 
-      color: 'bg-emerald-100',
-      description: "A quick tap to let us know you're doing okay today."
+      color: 'bg-[#E8A846]', // Brand Gold - high priority
+      iconColor: 'text-[#2D2D2D]',
+      description: "A quick tap to let us know you're doing okay today.",
+      action: 'dailyCheckIn'
     },
     { 
       id: 2, 
       label: 'Games', 
       icon: Gamepad2, 
-      color: 'bg-purple-100',
-      description: "Enjoy simple, fun games that keep your mind active and lift your spirits."
+      color: 'bg-[#8BA888]', // Soft Sage - calm social activity
+      iconColor: 'text-[#2D2D2D]',
+      description: "Enjoy simple, fun games that keep your mind active and lift your spirits.",
+      action: null
     },
     { 
       id: 3, 
       label: 'Live Activities', 
       icon: Radio, 
-      color: 'bg-blue-100',
-      description: "Join real-time classes, events, and social sessions happening right now."
+      color: 'bg-[#5B9BD5]', // Warm Blue - social activity
+      iconColor: 'text-[#2D2D2D]',
+      description: "Join real-time classes, events, and social sessions happening right now.",
+      action: null
     },
     { 
       id: 4, 
       label: 'Media Gallery', 
       icon: FolderOpen, 
-      color: 'bg-amber-100',
-      description: "Browse photos and moments shared by your Good Hands community."
+      color: 'bg-[#8BA888]', // Soft Sage - calm activity
+      iconColor: 'text-[#2D2D2D]',
+      description: "Browse photos and moments shared by your Good Hands community.",
+      action: null
     },
     { 
       id: 5, 
       label: 'Calendar', 
       icon: Calendar, 
-      color: 'bg-cyan-100',
-      description: "See all of your upcoming activities, classes, and special events."
+      color: 'bg-[#5B9BD5]', // Warm Blue - informational
+      iconColor: 'text-[#2D2D2D]',
+      description: "See all of your upcoming activities, classes, and special events.",
+      action: null
     },
     { 
       id: 6, 
       label: 'Request Help', 
       icon: Heart, 
-      color: 'bg-rose-100',
-      description: "Ask for assistance or support whenever you need it — we're here for you."
+      color: 'bg-[#E8A846]', // Brand Gold - high priority/urgent
+      iconColor: 'text-[#2D2D2D]',
+      description: "Ask for assistance or support whenever you need it — we're here for you.",
+      action: null
+    },
+    { 
+      id: 7, 
+      label: 'Resources', 
+      icon: BookOpen, 
+      color: 'bg-[#2563A8]', // Brand Blue - navigation/stability
+      iconColor: 'text-white',
+      description: "Find nearby pharmacies, food support, clinics, and community services.",
+      action: 'resources'
     },
   ];
+
+  const handleTileClick = (tile: typeof tiles[0]) => {
+    if (tile.action === 'resources') {
+      setCurrentView('resources');
+      setFlippedCard(null);
+    } else if (tile.action === 'dailyCheckIn') {
+      setCurrentView('dailyCheckIn');
+      setFlippedCard(null);
+    } else {
+      setFlippedCard(tile.id);
+    }
+  };
+
+  const handleSelectCategory = (category: string) => {
+    setSelectedCategory(category);
+    setCurrentView('resourcesList');
+  };
+
+  const handleBackToHome = () => {
+    setCurrentView('home');
+    setSelectedCategory('');
+  };
+
+  const handleBackToResources = () => {
+    setCurrentView('resources');
+    setSelectedCategory('');
+  };
 
   const handleMicClick = () => {
     setIsListening(true);
@@ -89,9 +144,30 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50 flex flex-col safe-area-inset">
+    <div className="min-h-screen bg-[#FBF8F3] flex flex-col safe-area-inset">
       <AnimatePresence mode="wait">
-        {!isListening ? (
+        {currentView === 'dailyCheckIn' ? (
+          <DailyCheckIn
+            key="daily-check-in"
+            userName="Felix"
+            onClose={handleBackToHome}
+            onNavigateToResources={() => setCurrentView('resources')}
+          />
+        ) : currentView === 'resources' ? (
+          <ResourcesHub
+            key="resources-hub"
+            onSelectCategory={handleSelectCategory}
+            onBack={handleBackToHome}
+            showDemoAnnotations={showDemoAnnotations}
+          />
+        ) : currentView === 'resourcesList' ? (
+          <ResourcesList
+            key="resources-list"
+            category={selectedCategory}
+            onBack={handleBackToResources}
+            showDemoAnnotations={showDemoAnnotations}
+          />
+        ) : !isListening ? (
           <motion.div
             key="main-view"
             initial={{ opacity: 0 }}
@@ -100,56 +176,38 @@ export default function App() {
             className="flex flex-col min-h-screen"
           >
             {/* Top Area */}
-            <header className="px-4 pt-4 pb-3 sm:px-6 sm:pt-8 sm:pb-4">
+            <header className="px-4 pt-4 pb-3 sm:px-6 sm:pt-6 sm:pb-4">
               <div className="flex items-start justify-between mb-2 gap-3">
                 <div className="flex-1 min-w-0">
-                  <p className="text-slate-800 text-sm sm:text-base">Good Morning, Felix</p>
-                  <p className="text-slate-800 text-sm sm:text-base">You're in Good Hands</p>
+                  <p className="text-[#2D2D2D] text-sm sm:text-base">Good Morning, Felix</p>
+                  <p className="text-[#2D2D2D] text-sm sm:text-base">You're in Good Hands</p>
                 </div>
-                <div className="perspective-1000 w-12 h-12 sm:w-14 sm:h-14 flex-shrink-0">
-                  <motion.div
-                    className="relative w-full h-full"
-                    animate={{ rotateY: showProfileInfo ? 180 : 0 }}
-                    transition={{ duration: 0.6, type: "spring", stiffness: 100 }}
-                    style={{ transformStyle: "preserve-3d" }}
+                
+                {/* Alert Bell and Profile Buttons */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {/* Alert Bell with Badge */}
+                  <button
+                    onClick={() => setShowAlertsModal(true)}
+                    className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-[#E8A846] to-[#d99835] border-4 border-white shadow-lg flex items-center justify-center active:scale-95 transition-transform"
                   >
-                    {/* Front - Profile Icon */}
-                    <button
-                      onClick={() => setShowProfileInfo(true)}
-                      className="absolute inset-0 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-blue-200 to-purple-200 border-4 border-white shadow-md flex items-center justify-center"
-                      style={{ 
-                        backfaceVisibility: "hidden",
-                        WebkitBackfaceVisibility: "hidden"
-                      }}
-                    >
-                      <User className="w-6 h-6 sm:w-7 sm:h-7 text-slate-700" strokeWidth={2.5} />
-                    </button>
-                    
-                    {/* Back - Info Tooltip - Mobile optimized positioning */}
-                    <div
-                      className="absolute right-0 top-16 w-64 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-xl p-4 border-2 border-blue-200 z-50"
-                      style={{ 
-                        backfaceVisibility: "hidden",
-                        WebkitBackfaceVisibility: "hidden",
-                        transform: "rotateY(180deg)"
-                      }}
-                    >
-                      <button
-                        onClick={() => setShowProfileInfo(false)}
-                        className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center"
-                      >
-                        <X className="w-5 h-5 text-slate-500" />
-                      </button>
-                      <p className="text-slate-800 text-sm leading-relaxed pt-4">
-                        Your profile. View your info, preferences, and account settings.
-                      </p>
-                    </div>
-                  </motion.div>
+                    <Bell className="w-6 h-6 sm:w-7 sm:h-7 text-white" strokeWidth={2.5} />
+                    <span className="absolute -top-1 -right-1 w-6 h-6 bg-[#d4183d] text-white text-xs rounded-full flex items-center justify-center border-2 border-white shadow-md">
+                      3
+                    </span>
+                  </button>
+
+                  {/* Profile Button */}
+                  <button
+                    onClick={() => setShowProfileModal(true)}
+                    className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-[#5B9BD5] to-[#2563A8] border-4 border-white shadow-lg flex items-center justify-center active:scale-95 transition-transform"
+                  >
+                    <User className="w-6 h-6 sm:w-7 sm:h-7 text-white" strokeWidth={2.5} />
+                  </button>
                 </div>
               </div>
               <div className="text-center">
-                <p className="text-slate-800 text-sm sm:text-base">{formatDate(currentTime)}</p>
-                <p className="text-slate-700 text-sm sm:text-base">{formatTime(currentTime)}</p>
+                <p className="text-[#2D2D2D] text-sm sm:text-base">{formatDate(currentTime)}</p>
+                <p className="text-[#6B6B6B] text-sm sm:text-base">{formatTime(currentTime)}</p>
               </div>
             </header>
 
@@ -170,28 +228,28 @@ export default function App() {
                       >
                         {/* Front of card */}
                         <button
-                          onClick={() => setFlippedCard(tile.id)}
-                          className={`absolute inset-0 ${tile.color} rounded-3xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-shadow active:scale-95 flex flex-col items-center justify-center gap-2 sm:gap-3 min-h-[110px] sm:min-h-[140px]`}
+                          onClick={() => handleTileClick(tile)}
+                          className={`absolute inset-0 ${tile.color} rounded-3xl p-4 sm:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.12)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.16)] transition-all active:scale-95 flex flex-col items-center justify-center gap-2 sm:gap-3 min-h-[110px] sm:min-h-[140px]`}
                           style={{ 
                             backfaceVisibility: "hidden",
                             WebkitBackfaceVisibility: "hidden"
                           }}
                         >
-                          <Icon className="w-10 h-10 sm:w-14 sm:h-14 text-slate-700" strokeWidth={2.5} />
-                          <span className="text-slate-800 text-center text-sm sm:text-base">{tile.label}</span>
+                          <Icon className={`w-10 h-10 sm:w-14 sm:h-14 ${tile.iconColor}`} strokeWidth={2.5} />
+                          <span className={`text-center text-sm sm:text-base ${tile.iconColor === 'text-white' ? 'text-white' : 'text-[#2D2D2D]'}`}>{tile.label}</span>
                         </button>
                         
                         {/* Back of card */}
                         <button
                           onClick={() => setFlippedCard(null)}
-                          className={`absolute inset-0 ${tile.color} rounded-3xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-shadow active:scale-95 flex flex-col items-center justify-center min-h-[110px] sm:min-h-[140px]`}
+                          className={`absolute inset-0 ${tile.color} rounded-3xl p-4 sm:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.12)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.16)] transition-all active:scale-95 flex flex-col items-center justify-center min-h-[110px] sm:min-h-[140px]`}
                           style={{ 
                             backfaceVisibility: "hidden",
                             WebkitBackfaceVisibility: "hidden",
                             transform: "rotateY(180deg)"
                           }}
                         >
-                          <p className="text-slate-800 text-center text-xs sm:text-sm leading-relaxed">
+                          <p className={`text-center text-xs sm:text-sm leading-relaxed ${tile.iconColor === 'text-white' ? 'text-white' : 'text-[#2D2D2D]'}`}>
                             {tile.description}
                           </p>
                         </button>
@@ -223,77 +281,206 @@ export default function App() {
                   The app will listen and guide you.
                 </p>
               </div>
-
-              {/* Bottom Navigation */}
-              <nav className="w-full bg-white/60 backdrop-blur-sm rounded-3xl shadow-lg py-3 px-4 sm:py-4 sm:px-8 flex justify-around items-center max-w-md mx-auto relative">
-                <button className="flex flex-col items-center gap-1 min-w-[44px] min-h-[44px] -m-1 p-1">
-                  <Home className="w-7 h-7 sm:w-8 sm:h-8 text-slate-700" strokeWidth={2.5} />
-                  <span className="text-xs text-slate-700">Home</span>
-                </button>
-                
-                {/* Alerts Button with Tooltip */}
-                <div className="relative flex flex-col items-center">
-                  <AnimatePresence>
-                    {showAlertsInfo && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        className="absolute bottom-full mb-2 w-56 max-w-[calc(100vw-3rem)] bg-white rounded-2xl shadow-xl p-4 border-2 border-amber-200 z-10"
-                      >
-                        <button
-                          onClick={() => setShowAlertsInfo(false)}
-                          className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center"
-                        >
-                          <X className="w-5 h-5 text-slate-500" />
-                        </button>
-                        <p className="text-slate-800 text-sm leading-relaxed pt-2">
-                          View important messages, reminders, and notifications from Good Hands.
-                        </p>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                  <button 
-                    onClick={() => setShowAlertsInfo(!showAlertsInfo)}
-                    className="flex flex-col items-center gap-1 min-w-[44px] min-h-[44px] -m-1 p-1"
-                  >
-                    <Bell className="w-7 h-7 sm:w-8 sm:h-8 text-slate-500" strokeWidth={2} />
-                    <span className="text-xs text-slate-500">Alerts</span>
-                  </button>
-                </div>
-                
-                {/* Settings Button with Tooltip */}
-                <div className="relative flex flex-col items-center">
-                  <AnimatePresence>
-                    {showSettingsInfo && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        className="absolute bottom-full mb-2 w-56 max-w-[calc(100vw-3rem)] bg-white rounded-2xl shadow-xl p-4 border-2 border-purple-200 z-10"
-                      >
-                        <button
-                          onClick={() => setShowSettingsInfo(false)}
-                          className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center"
-                        >
-                          <X className="w-5 h-5 text-slate-500" />
-                        </button>
-                        <p className="text-slate-800 text-sm leading-relaxed pt-2">
-                          Adjust your app preferences, accessibility options, and personal settings.
-                        </p>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                  <button 
-                    onClick={() => setShowSettingsInfo(!showSettingsInfo)}
-                    className="flex flex-col items-center gap-1 min-w-[44px] min-h-[44px] -m-1 p-1"
-                  >
-                    <Settings className="w-7 h-7 sm:w-8 sm:h-8 text-slate-500" strokeWidth={2} />
-                    <span className="text-xs text-slate-500">Settings</span>
-                  </button>
-                </div>
-              </nav>
             </div>
+
+            {/* Alerts Modal */}
+            <AnimatePresence>
+              {showAlertsModal && (
+                <>
+                  {/* Backdrop */}
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black/50 z-40"
+                    onClick={() => setShowAlertsModal(false)}
+                  />
+                  
+                  {/* Modal */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 50 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 50 }}
+                    className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-md mx-auto bg-white rounded-3xl shadow-2xl z-50 max-h-[80vh] overflow-y-auto"
+                  >
+                    <div className="sticky top-0 bg-white border-b border-[#E8E6E0] px-6 py-4 rounded-t-3xl flex items-center justify-between">
+                      <div>
+                        <h2 className="text-[#2D2D2D] text-lg">Alerts</h2>
+                        <p className="text-[#6B6B6B] text-xs">You have 3 new alerts</p>
+                      </div>
+                      <button
+                        onClick={() => setShowAlertsModal(false)}
+                        className="w-10 h-10 flex items-center justify-center text-[#6B6B6B] hover:bg-[#F5F5F0] rounded-full transition-colors"
+                      >
+                        <X className="w-6 h-6" />
+                      </button>
+                    </div>
+
+                    <div className="p-6 space-y-4">
+                      {/* Alert 1 - Account */}
+                      <div className="bg-[#FBF8F3] rounded-3xl p-5 border-l-4 border-[#2563A8]">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-full bg-[#2563A8] flex items-center justify-center flex-shrink-0">
+                            <User className="w-5 h-5 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="text-[#2D2D2D] text-sm mb-1">Account Update</h3>
+                            <p className="text-[#6B6B6B] text-xs leading-relaxed mb-2">
+                              Your profile information has been successfully updated. Your preferences are now saved.
+                            </p>
+                            <span className="text-[#6B6B6B] text-xs">2 hours ago</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Alert 2 - Messages */}
+                      <div className="bg-[#FBF8F3] rounded-3xl p-5 border-l-4 border-[#8BA888]">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-full bg-[#8BA888] flex items-center justify-center flex-shrink-0">
+                            <Bell className="w-5 h-5 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="text-[#2D2D2D] text-sm mb-1">New Message</h3>
+                            <p className="text-[#6B6B6B] text-xs leading-relaxed mb-2">
+                              You have a new message from your care coordinator. They've shared updates about your upcoming activities.
+                            </p>
+                            <span className="text-[#6B6B6B] text-xs">5 hours ago</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Alert 3 - Reminders */}
+                      <div className="bg-[#FBF8F3] rounded-3xl p-5 border-l-4 border-[#E8A846]">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-full bg-[#E8A846] flex items-center justify-center flex-shrink-0">
+                            <Calendar className="w-5 h-5 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="text-[#2D2D2D] text-sm mb-1">Reminder: Upcoming Event</h3>
+                            <p className="text-[#6B6B6B] text-xs leading-relaxed mb-2">
+                              Don't forget! You have "Chair Yoga" scheduled for tomorrow at 10:00 AM. See you there!
+                            </p>
+                            <span className="text-[#6B6B6B] text-xs">Yesterday</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-6 pt-0">
+                      <button
+                        onClick={() => setShowAlertsModal(false)}
+                        className="w-full bg-gradient-to-br from-[#2563A8] to-[#1e4d87] text-white py-4 rounded-3xl shadow-lg hover:shadow-xl transition-all active:scale-95"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+
+            {/* Profile Modal */}
+            <AnimatePresence>
+              {showProfileModal && (
+                <>
+                  {/* Backdrop */}
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black/50 z-40"
+                    onClick={() => setShowProfileModal(false)}
+                  />
+                  
+                  {/* Modal */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 50 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 50 }}
+                    className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-md mx-auto bg-white rounded-3xl shadow-2xl z-50 max-h-[80vh] overflow-y-auto"
+                  >
+                    <div className="sticky top-0 bg-white border-b border-[#E8E6E0] px-6 py-4 rounded-t-3xl flex items-center justify-between">
+                      <div>
+                        <h2 className="text-[#2D2D2D] text-lg">Profile & Settings</h2>
+                        <p className="text-[#6B6B6B] text-xs">Felix Thompson</p>
+                      </div>
+                      <button
+                        onClick={() => setShowProfileModal(false)}
+                        className="w-10 h-10 flex items-center justify-center text-[#6B6B6B] hover:bg-[#F5F5F0] rounded-full transition-colors"
+                      >
+                        <X className="w-6 h-6" />
+                      </button>
+                    </div>
+
+                    <div className="p-6 space-y-3">
+                      {/* Profile Info */}
+                      <button className="w-full bg-[#FBF8F3] hover:bg-[#F5F5F0] rounded-3xl p-5 flex items-center gap-4 transition-all active:scale-95 shadow-md">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#5B9BD5] to-[#2563A8] flex items-center justify-center flex-shrink-0">
+                          <User className="w-6 h-6 text-white" />
+                        </div>
+                        <div className="flex-1 text-left">
+                          <h3 className="text-[#2D2D2D] text-sm">My Profile</h3>
+                          <p className="text-[#6B6B6B] text-xs">View and edit your personal information</p>
+                        </div>
+                      </button>
+
+                      {/* Preferences */}
+                      <button className="w-full bg-[#FBF8F3] hover:bg-[#F5F5F0] rounded-3xl p-5 flex items-center gap-4 transition-all active:scale-95 shadow-md">
+                        <div className="w-12 h-12 rounded-full bg-[#8BA888] flex items-center justify-center flex-shrink-0">
+                          <Heart className="w-6 h-6 text-white" />
+                        </div>
+                        <div className="flex-1 text-left">
+                          <h3 className="text-[#2D2D2D] text-sm">Preferences</h3>
+                          <p className="text-[#6B6B6B] text-xs">Customize your app experience</p>
+                        </div>
+                      </button>
+
+                      {/* Accessibility */}
+                      <button className="w-full bg-[#FBF8F3] hover:bg-[#F5F5F0] rounded-3xl p-5 flex items-center gap-4 transition-all active:scale-95 shadow-md">
+                        <div className="w-12 h-12 rounded-full bg-[#5B9BD5] flex items-center justify-center flex-shrink-0">
+                          <Settings className="w-6 h-6 text-white" />
+                        </div>
+                        <div className="flex-1 text-left">
+                          <h3 className="text-[#2D2D2D] text-sm">Accessibility</h3>
+                          <p className="text-[#6B6B6B] text-xs">Adjust text size, contrast, and more</p>
+                        </div>
+                      </button>
+
+                      {/* App Settings */}
+                      <button className="w-full bg-[#FBF8F3] hover:bg-[#F5F5F0] rounded-3xl p-5 flex items-center gap-4 transition-all active:scale-95 shadow-md">
+                        <div className="w-12 h-12 rounded-full bg-[#E8A846] flex items-center justify-center flex-shrink-0">
+                          <Settings className="w-6 h-6 text-white" />
+                        </div>
+                        <div className="flex-1 text-left">
+                          <h3 className="text-[#2D2D2D] text-sm">App Settings</h3>
+                          <p className="text-[#6B6B6B] text-xs">Notifications, privacy, and security</p>
+                        </div>
+                      </button>
+
+                      {/* Logout */}
+                      <button className="w-full bg-[#FBF8F3] hover:bg-[#F5F5F0] rounded-3xl p-5 flex items-center gap-4 transition-all active:scale-95 shadow-md border-2 border-[#d4183d]/20">
+                        <div className="w-12 h-12 rounded-full bg-[#d4183d] flex items-center justify-center flex-shrink-0">
+                          <X className="w-6 h-6 text-white" />
+                        </div>
+                        <div className="flex-1 text-left">
+                          <h3 className="text-[#d4183d] text-sm">Log Out</h3>
+                          <p className="text-[#6B6B6B] text-xs">Sign out of your account</p>
+                        </div>
+                      </button>
+                    </div>
+
+                    <div className="p-6 pt-0">
+                      <button
+                        onClick={() => setShowProfileModal(false)}
+                        className="w-full bg-gradient-to-br from-[#2563A8] to-[#1e4d87] text-white py-4 rounded-3xl shadow-lg hover:shadow-xl transition-all active:scale-95"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
           </motion.div>
         ) : (
           <motion.div
@@ -413,6 +600,10 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
+      <DemoToggleButton
+        showAnnotations={showDemoAnnotations}
+        onToggleAnnotations={setShowDemoAnnotations}
+      />
     </div>
   );
 }
